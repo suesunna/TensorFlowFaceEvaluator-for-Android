@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">TensorFlowFaceEvaluator</string>
+    <string name="request_camera_permission">"Fukuron Camera needs camera permission."</string>
+</resources>
