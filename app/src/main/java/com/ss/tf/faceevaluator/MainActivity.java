@@ -205,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTextureView.setOnClickListener(this);
 
         mFaceEvaluator = new TensorFlowFaceEvaluator();
-        mFaceEvaluator.initializeTensorFlow(getAssets(), "");
+        mFaceEvaluator.initializeTensorFlow(getAssets(), "file:///android_asset/doc2016.pb", 2, 28);
     }
 
     @Override
@@ -459,13 +459,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Frame frame = new Frame.Builder().setBitmap(bitmap).build();
         SparseArray<Face> faces = faceDetector.detect(frame);
         for (int i = 0; i < faces.size(); i++) {
-            final Face face = faces.get(i);
-            final PointF position = face.getPosition();
+            Face face = faces.get(i);
+            if (face == null) continue;
+            PointF position = face.getPosition();
+            int facePositionX = (int) position.x;
+            int facePositionY = (int) position.y;
+            int faceWidth = (int)(face.getWidth());
+            int faceHeight = (int)(face.getHeight());
+            if (faceWidth > faceHeight) {
+                facePositionX += ((faceWidth - faceHeight) / 2);
+                faceWidth = faceHeight;
+            } else if (faceWidth < faceHeight) {
+                facePositionY += ((faceHeight - faceWidth) / 2);
+                faceHeight = faceWidth;
+            }
+
             Bitmap faceBitmap = Bitmap.createBitmap(bitmap,
-                    (int) position.x, (int) position.y,
-                    (int)(face.getWidth()), (int)(face.getHeight()));
-            //TODO: TensorFlowで犬猫を判定
+                    facePositionX, facePositionY,
+                    faceWidth, faceHeight);
             saveBitmap(faceBitmap);
+            float[] score = mFaceEvaluator.runInference(faceBitmap);
+            Log.i(TAG, "RESULT: " + score[0] + "," + score[1]);
+            if (score[0] < score[1]) {
+                Toast.makeText(this, "猫", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "犬", Toast.LENGTH_LONG).show();
+            }
         }
         faceDetector.release();
     }
